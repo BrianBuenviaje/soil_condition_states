@@ -28,7 +28,7 @@ The `monitor` folder holds the Soil Condition Monitor, a minimal application des
 ## Install
 
 ```bash
-git clone https://github.com/BVADBuenviaje/soil_condition_states.git
+git clone https://github.com/BrianBuenviaje/soil_condition_states.git
 cd soil_condition_states
 python -m venv .venv
 # Windows:        .venv\Scripts\activate

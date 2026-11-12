@@ -116,6 +116,7 @@ for f in sorted(['soil_clean.csv', 'soil_features.csv', 'soil_states_k4.csv', 'r
                  'fig4_12_quality.png', 'fig4_13_critical_difference.png', 'fig4_14_tradeoff.png',
                  'fig4_15_validation.png',
                  'comparison_lono_summary.csv', 'comparison_random_kfold.csv',
+                 'comparison_methods.csv', 'comparison_methods.json', 'ch4_methods.png',
                  'results_and_discussion.tex']):
     size = os.path.getsize(f) if os.path.exists(f) else 0
     w(f'  {f:<36} {size:>10,} bytes   sha {sha(f)}')
