@@ -157,5 +157,6 @@ def evaluate(d):
                 info["out_of_range"] = bad
         out.append(dict(node=n, ts=t, state=s, held_h=k["held"], drier_run_h=k["drier"],
                         moisture=round(row.moisture, 2), ph=round(row.ph, 2), temp=round(row.temp, 2),
-                        ec=round(row.ec, 3), settling=bool(settling), rules=fired, info=info))
+                        ec=round(row.ec, 3), settling=bool(settling), rules=fired, info=info,
+                        moisture_rel=round(float(row.moisture_rel), 6)))
     return pd.DataFrame(out)

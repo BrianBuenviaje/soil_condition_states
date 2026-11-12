@@ -16,7 +16,7 @@ nodes = {}
 for n, g in r.groupby("node"):
     nodes[n] = [dict(t=x.ts.strftime("%Y-%m-%dT%H:%M:%S"), s=x.state, h=int(x.held_h), dr=int(x.drier_run_h),
                      m=x.moisture, ph=x.ph, tc=x.temp, ec=x.ec, st=x.settling,
-                     r=list(x.rules), i=x.info) for x in g.itertuples(index=False)]
+                     r=list(x.rules), i=x.info, mr=x.moisture_rel) for x in g.itertuples(index=False)]
 
 payload = dict(source=src.name, start=r.ts.min().strftime("%Y-%m-%dT%H:%M:%S"),
                end=r.ts.max().strftime("%Y-%m-%dT%H:%M:%S"), states=STATES, rules=RULES, nodes=nodes)
