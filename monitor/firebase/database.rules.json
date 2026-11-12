@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "live": {
+      ".read": true,
+      "feed": {
+        ".write": "auth != null",
+        "$key": {
+          ".validate": "$key.matches(/^t[0-9]+_[ir]_Node-[0-9]+$/) && newData.hasChildren(['kind', 'node', 't'])"
+        }
+      }
+    }
+  }
+}
