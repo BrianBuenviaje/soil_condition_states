@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FFFFFF">
+<title>Soil Monitor Demo Control</title>
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="control.css">
+</head>
+<body class="bg-canvas font-sans text-ink antialiased">
+
+<div class="mx-auto max-w-5xl px-4 pb-16 pt-5">
+  <header class="flex items-center gap-3">
+    <img src="logo.png" alt="" class="h-10 w-10 shrink-0">
+    <div class="min-w-0 flex-1">
+      <h1 class="truncate text-lg font-semibold leading-tight tracking-tight">Demo control</h1>
+      <p class="truncate text-[13px] text-dim">Sends simulated readings to the Soil Condition Monitor</p>
+    </div>
+    <span id="conn" class="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"></span>
+  </header>
+
+  <div class="mt-5 grid gap-4 lg:grid-cols-2">
+    <div class="space-y-4">
+      <section class="rounded-xl border border-line bg-card p-4 shadow-sm">
+        <h2 class="text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">Data source</h2>
+        <div id="modes" class="mt-2 grid grid-cols-2 gap-1 rounded-xl bg-empty p-1"></div>
+        <p id="modeNote" class="mt-2.5 text-[13px] leading-relaxed text-muted"></p>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <a id="openApp" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-sm font-semibold text-white transition duration-150 hover:opacity-90 active:scale-95">Open the app</a>
+          <button id="copyLink" class="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-semibold text-muted transition duration-150 hover:bg-raised hover:text-ink active:scale-95">Copy link for phones</button>
+          <button id="retry" class="hidden rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-semibold text-muted transition duration-150 hover:bg-raised hover:text-ink active:scale-95">Try again</button>
+        </div>
+        <p id="appLink" class="mt-2 break-all font-mono text-[11px] text-dim"></p>
+      </section>
+
+      <section class="rounded-xl border border-line bg-card p-4 shadow-sm">
+        <div class="flex items-baseline justify-between gap-2">
+          <h2 class="text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">Simulated time</h2>
+          <span id="runState" class="text-xs font-medium text-muted"></span>
+        </div>
+        <div id="clock" class="mt-1 font-mono text-2xl font-medium tracking-tight">--</div>
+        <div class="mt-3 grid grid-cols-4 gap-2">
+          <button id="pause" class="col-span-1 rounded-lg bg-ink px-2 py-2 text-sm font-semibold text-white transition duration-150 hover:opacity-90 active:scale-95">Pause</button>
+          <button data-skip="1" class="rounded-lg border border-line bg-card px-2 py-2 font-mono text-sm font-medium text-muted transition duration-150 hover:bg-raised hover:text-ink active:scale-95">+1 h</button>
+          <button data-skip="6" class="rounded-lg border border-line bg-card px-2 py-2 font-mono text-sm font-medium text-muted transition duration-150 hover:bg-raised hover:text-ink active:scale-95">+6 h</button>
+          <button data-skip="24" class="rounded-lg border border-line bg-card px-2 py-2 font-mono text-sm font-medium text-muted transition duration-150 hover:bg-raised hover:text-ink active:scale-95">+24 h</button>
+        </div>
+        <div class="mt-4 flex items-center justify-between gap-2">
+          <span class="text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">Speed</span>
+          <span id="speedNote" class="text-xs text-muted"></span>
+        </div>
+        <div id="speeds" class="mt-1.5 grid grid-cols-5 gap-1 rounded-xl bg-empty p-1"></div>
+      </section>
+
+      <section class="rounded-xl border border-line bg-card p-4 shadow-sm">
+        <h2 class="text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">Scenarios</h2>
+        <p class="mt-1 text-[13px] text-muted">Pick a node, then start a scenario. It begins at the next simulated hour.</p>
+        <div id="nodePick" class="mt-3 grid grid-cols-5 gap-1 rounded-xl bg-empty p-1"></div>
+        <div id="scenarios" class="mt-3 space-y-2"></div>
+      </section>
+    </div>
+
+    <div class="space-y-4">
+      <section class="rounded-xl border border-line bg-card p-4 shadow-sm">
+        <div class="flex items-baseline justify-between gap-2">
+          <h2 class="text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">Nodes now</h2>
+          <span class="text-xs text-dim">Latest reading per node</span>
+        </div>
+        <div id="nodes" class="mt-2 divide-y divide-line"></div>
+      </section>
+
+      <section class="rounded-xl border border-line bg-card p-4 shadow-sm">
+        <div class="flex items-baseline justify-between gap-2">
+          <h2 class="text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">Activity</h2>
+          <span id="logCount" class="text-xs text-dim"></span>
+        </div>
+        <ol id="log" class="mt-2 max-h-72 space-y-1.5 overflow-y-auto pr-1 text-[13px]"></ol>
+      </section>
+
+      <section class="rounded-xl border border-line bg-card p-4 shadow-sm">
+        <h2 class="text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">Start over</h2>
+        <p class="mt-1 text-[13px] leading-relaxed text-muted">Removes every simulated reading so the app shows only the recorded month again. The recorded data is never changed.</p>
+        <button id="reset" class="mt-3 w-full rounded-lg border border-clay/40 bg-clay/10 px-3.5 py-2 text-sm font-semibold text-clay transition duration-150 hover:bg-clay/15 active:scale-[0.98]">Reset the demo</button>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4 opacity-0 transition-opacity duration-200">
+  <div id="toastText" class="rounded-full bg-ink px-4 py-2 text-sm font-medium text-white shadow-lg"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="config.js"></script>
+<script src="engine.js"></script>
+<script src="simulator.js"></script>
+<script src="live.js"></script>
+<script src="control.js"></script>
+</body>
+</html>

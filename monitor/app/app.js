@@ -32,6 +32,7 @@
     right2: '<path d="m5.5 6 6 6-6 6"/><path d="m12.5 6 6 6-6 6"/>',
     down: '<path d="m6 9.5 6 6 6-6"/>',
     replay: '<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4.5V9H8"/>',
+    live: '<circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="9"/>',
     nodes: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
     advice: '<path d="M12 3.5a6 6 0 0 0-3.5 10.9V17h7v-2.6A6 6 0 0 0 12 3.5Z"/><path d="M9.5 20.5h5"/>',
     week: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17"/><path d="M8 3v4"/><path d="M16 3v4"/>',
@@ -55,9 +56,9 @@
 
   for (const n of NODES) for (const r of D.nodes[n]) r.ms = parse(r.t);
   const H0 = Math.floor(parse(D.start) / HOUR) * HOUR;
-  const H1 = Math.floor(parse(D.end) / HOUR) * HOUR;
+  let H1 = Math.floor(parse(D.end) / HOUR) * HOUR;
   const slider = document.getElementById("slider");
-  const MAXK = (H1 - H0) / HOUR;
+  let MAXK = (H1 - H0) / HOUR;
   slider.max = String(MAXK);
 
   const S = { view: "nodes", node: NODES[0], k: MAXK, why: false };
@@ -80,8 +81,11 @@
   };
 
   const startMs = parse(D.start), endMs = parse(D.end);
-  document.getElementById("meta").textContent = "Davao City, " + NODES.length + " nodes, " + fmtDate(startMs) + " to " + fmtDate(endMs) + " " + dt(endMs).getUTCFullYear();
-  document.getElementById("replayTag").innerHTML = svg("replay", "h-3 w-3") + "Replay";
+  const setMeta = (e) => { document.getElementById("meta").textContent = "Davao City, " + NODES.length + " nodes, " + fmtDate(startMs) + " to " + fmtDate(e) + " " + dt(e).getUTCFullYear(); };
+  const BADGE = { replay: ["replay", "Replay"], live: ["live", "Live"], sim: ["live", "Simulated"] };
+  const setBadge = (m) => { const b = BADGE[m] || BADGE.replay; document.getElementById("replayTag").innerHTML = svg(b[0], "h-3 w-3") + b[1]; };
+  setMeta(endMs);
+  setBadge("replay");
 
   const stepIcon = { "-24": "left2", "-1": "left", "1": "right", "24": "right2" };
   document.querySelectorAll("button[data-step]").forEach((b) => {
@@ -149,7 +153,7 @@
       '<span class="rounded bg-ink px-1.5 py-0.5 font-mono text-[11px] font-semibold text-white">' + id + "</span>" +
       '<span class="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ' + K.chip + '">' + K.label + "</span></div>" +
       '<p class="mt-2.5 text-[17px] font-semibold leading-snug">' + R.action + ".</p>" +
-      '<details class="why mt-3 border-t border-line pt-2"' + (open ? " open" : "") + '><summary class="flex cursor-pointer items-center justify-between py-1 text-[13px] font-semibold text-brand">Why this advice' + svg("down", "why-chev h-4 w-4 transition-transform duration-200") + "</summary>" +
+      '<details data-rule="' + id + '" class="why mt-3 border-t border-line pt-2"' + (open ? " open" : "") + '><summary class="flex cursor-pointer items-center justify-between py-1 text-[13px] font-semibold text-brand">Why this advice' + svg("down", "why-chev h-4 w-4 transition-transform duration-200") + "</summary>" +
       '<dl class="why-body mt-2 space-y-2.5">' + row("Condition", R.condition + ".") + row("Observed", evidence(id, r)) +
       row("Basis", R.basis + '. <span class="text-dim">' + R.cites.join("; ") + ".</span>") + "</dl></details></article>";
   }
@@ -232,16 +236,33 @@
   }
 
   let lastView = null;
-  function render() {
+  function render(quiet) {
     const T = asOf();
     document.getElementById("now").textContent = fmtDay(T + 1) + ", " + fmtTime(T + 1);
     slider.style.setProperty("--p", (100 * S.k / MAXK).toFixed(2) + "%");
     const el = document.getElementById("view");
+    if (quiet && S.view === "rules") return;
+    const open = {};
+    el.querySelectorAll("details[data-rule]").forEach((d) => { open[d.dataset.rule] = d.open; });
     const html = S.view === "nodes" ? nodesView(T) : S.view === "advice" ? adviceView(T) : S.view === "week" ? weekView(T) : rulesView();
     const changed = lastView !== S.view + S.node;
     el.innerHTML = '<div class="' + (changed ? "animate-viewIn" : "") + '">' + html + "</div>";
+    if (quiet && !changed) el.querySelectorAll("details[data-rule]").forEach((d) => { if (d.dataset.rule in open) d.open = open[d.dataset.rule]; });
     lastView = S.view + S.node;
     tabs();
+  }
+
+  function extend() {
+    let end = endMs;
+    for (const n of NODES) { const a = D.nodes[n]; if (a.length) end = Math.max(end, a[a.length - 1].ms); }
+    const atEnd = S.k >= MAXK;
+    H1 = Math.floor(end / HOUR) * HOUR;
+    MAXK = (H1 - H0) / HOUR;
+    slider.max = String(MAXK);
+    if (atEnd || S.k > MAXK) S.k = MAXK;
+    slider.value = String(S.k);
+    setMeta(end);
+    render(true);
   }
 
   function go(view, node) {
@@ -271,8 +292,29 @@
   const pre = document.getElementById("preloader");
   const fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
   const logo = new Promise((res) => { const im = new Image(); im.onload = im.onerror = res; im.src = "logo.png"; });
-  Promise.all([fonts, logo]).then(() => {
+  const shown = Promise.all([fonts, logo]).then(() => new Promise((res) => {
     const wait = Math.max(0, 700 - (performance.now() - T0));
-    setTimeout(() => { pre.classList.add("done"); document.body.dataset.ready = "1"; }, wait);
-  });
+    setTimeout(() => { pre.classList.add("done"); document.body.dataset.ready = "1"; res(); }, wait);
+  }));
+
+  const load = (src) => new Promise((res, rej) => { const el = document.createElement("script"); el.src = src; el.onload = res; el.onerror = rej; document.body.appendChild(el); });
+  const source = new URLSearchParams(location.search).get("source");
+  if (source !== "replay" && window.SoilLive && window.SoilEngine && window.SoilSimulator) {
+    shown.then(() => (window.SOIL_MODEL ? null : load("model.js"))).then(() => {
+      window.SoilLive.startApp({
+        data: D, model: window.SOIL_MODEL, config: window.SOIL_CONFIG || {},
+        onUpdate: extend,
+        onMode: (m, why) => {
+          if (document.body.dataset.source === m) return;
+          setBadge(m);
+          document.body.dataset.source = m;
+          if (why) console.info("Data source:", m, "(" + why + ")");
+        },
+      });
+    }).catch((e) => console.warn("Live data unavailable, showing the recorded month only", e));
+  }
+
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
 })();
